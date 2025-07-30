@@ -1,0 +1,74 @@
+services:
+  php:
+    build:
+      context: .
+    volumes:
+      - ./php.ini:/etc/php/8.2/cli/conf.d/custom.ini
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - ./src:/var/www/html:delegated
+    depends_on:
+      - db
+      - mailhog
+    restart: always
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=dcvendas_db
+      - DB_USERNAME=admin
+      - DB_PASSWORD=1991
+
+  db:
+    image: mariadb
+    restart: always
+    environment:
+      MYSQL_DATABASE: dcvendas_db
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: 1991
+      MYSQL_ROOT_PASSWORD: 1991
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  composer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./src:/var/www/html:delegated
+    entrypoint: [ "composer" ]
+
+  artisan:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./src:/var/www/html:delegated
+    entrypoint: [ "php", "artisan" ]
+
+  npm:
+    image: node:current-alpine
+    volumes:
+      - ./src:/var/www/html
+    ports:
+      - "3001:3001"
+      - "5173:5173"
+    working_dir: /var/www/html
+    entrypoint: [ 'npm' ]
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+
+volumes:
+  db_data:
