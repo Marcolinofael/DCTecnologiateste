@@ -326,11 +326,7 @@ return [
                     'url' => '/product',
                     'icon' => 'fas fa-fw fa-box',
                 ],
-                // [
-                //     'text' => 'Condicoes de Pagamento',
-                //     'url' => '#',
-                //     'icon' => 'fas fa-fw fa-credit-card',
-                // ],
+
             ],
         ],
         [

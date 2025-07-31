@@ -16,24 +16,46 @@
 
         <div class="card-body">
             <div>
-                <a href="{{ route('sale.create') }}" type="button" class="btn btn-primary" style="width:80px;">Novo</a>
+                <a href="{{ route('sale.create') }}" type="button" class="btn btn-primary" style="width:100px;">Nova Venda</a>
             </div>
             <br>
-            <table class="table table-bordered table-striped dataTable dtr-inline" id="sale-table" style="font-size: 15px;">
+            <table class="table table-bordered table-striped dataTable dtr-inline" id="sales" style="font-size: 14px;">
                 <thead>
                     <tr>
-                        <th style="width: 5%">Id</th>
-                        <th style="width: 30%">Cliente</th>
-                        <th style="width: 20%">Produto</th>
-                        <th style="width: 15%">Valor total do Produto</th>
+                        <th style="width: 5%">ID</th>
+                        <th style="width: 20%">Cliente</th>
+                        <th style="width: 15%">Produtos</th>
+                        <th style="width: 10%">Valor Total</th>
+                        <th style="width: 15%">Forma de Pagamento</th>
+                        <th style="width: 10%">Data da Venda</th>
                         <th style="width: 15%">Vendedor</th>
-                        <th style="width: 10%">Ações</th>
+                        <th style="width: 15%">Ações</th>
                     </tr>
                 </thead>
             </table>
         </div>
-
     </div>
+
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <a href="{{ route('sale.pdf', $id) }}" class="btn btn-info btn-sm" target="_blank" title="PDF">
+                <i class="fas fa-file-pdf"></i>
+            </a>
+        </div>
+    @endif
 @stop
 
 @section('css')
@@ -41,15 +63,13 @@
 @stop
 
 @section('js')
-
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap4.min.js"></script>
 
     <script>
         $(document).ready(function() {
-
-            $('#sale-table').DataTable({
+            $('#sales').DataTable({
                 language: {
                     "sEmptyTable": "Nenhum registro encontrado",
                     "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
@@ -81,22 +101,29 @@
                         name: 'id'
                     },
                     {
-                        data: 'nome',
-                        name: 'nome'
+                        data: 'customer_name',
+                        name: 'customer_name'
                     },
                     {
-                        data: 'titulo',
-                        name: 'titulo'
+                        data: 'products_count',
+                        name: 'products_count'
                     },
                     {
-                        data: 'data_locacao',
-                        name: 'data_locacao'
+                        data: 'formatted_total',
+                        name: 'formatted_total'
                     },
                     {
-                        data: 'data_prevista_devolucao',
-                        name: 'data_prevista_devolucao'
+                        data: 'payment_method_label',
+                        name: 'payment_method_label'
                     },
-
+                    {
+                        data: 'formatted_date',
+                        name: 'formatted_date'
+                    },
+                    {
+                        data: 'user_name',
+                        name: 'user_name'
+                    },
                     {
                         data: 'action',
                         name: 'action',
