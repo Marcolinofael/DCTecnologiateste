@@ -17,3 +17,4 @@ Route::middleware('auth')->group(function () {});
 Route::resource('costumer', CostumerController::class);
 Route::resource('product', ProductController::class);
 Route::resource('sale', SaleController::class);
+Route::get('sale/{sale}/pdf', [SaleController::class, 'pdf'])->name('sale.pdf');

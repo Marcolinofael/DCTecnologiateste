@@ -6,401 +6,501 @@
 @stop
 
 @section('content')
-    <div class="card card-primary">
+    <div class="card">
         <div class="card-header">
-            <h3 class="card-title">Controle de Vendas</h3>
+            <h3 class="card-title">Cadastrar Nova Venda</h3>
         </div>
-        <form method="POST" action="{{ isset($edit) ? route('sale.update', $edit->id) : route('sale.store') }}">
+
+        <form action="{{ isset($sale) ? route('sale.update', $sale->id) : route('sale.store') }}" method="POST"
+            id="sale-form">
             @csrf
-            @if (isset($edit))
+            @if (isset($sale))
                 @method('PUT')
             @endif
             <div class="card-body">
-                <div class="form-group">
-                    <div class="row">
 
-                        <div class="col-sm-4">
-                            <label for="costumer_id">Cliente</label>
-                            <select class="form-control" id="costumer_id" name="costumer_id">
-                                <option value="">Selecione</option>
-                                @foreach ($costumers as $costumer)
-                                    <option value="{{ $costumer->id }}" data-cpf="{{ $costumer->cpf }}"
-                                        data-phone="{{ $costumer->phone }}"
-                                        {{ old('costumer_id', @$edit->costumer_id) == $costumer->id ? 'selected' : '' }}>
-                                        {{ $costumer->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @if ($errors->has('costumer_id'))
-                                <span style="color: red;">{{ $errors->first('costumer_id') }}</span>
-                            @endif
-                        </div>
-                        <div class="col-sm-4">
-                            <label for="cpf">CPF</label>
-                            <input type="text" class="form-control" id="cpf" name="cpf" readonly>
-                        </div>
-                        <div class="col-sm-4">
-                            <label for="phone">Telefone</label>
-                            <input type="text" class="form-control" id="phone" name="phone" readonly>
-                        </div>
+                @if (session('error'))
+                    <div class="alert alert-danger">
+                        {{ session('error') }}
                     </div>
-                    <br>
-                    <div class="row">
-                        <div class="col-sm-2">
-                            <label for="product_id">Produto | Estoque</label>
-                            <select class="form-control" id="product_id" name="product_id">
-                                <option value="">Selecione</option>
+                @endif
 
-                                @foreach ($products as $product)
-                                    <option value="{{ $product->id }}" data-price="{{ $product->price }}"
-                                        data-stock="{{ $product->stock_quantity }}"
-                                        {{ old('product_id', @$edit->product_id) == $product->id ? 'selected' : '' }}>
-                                        {{ $product['product_name'] . ' | ' . $product[''] }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @if ($errors->has('product_id'))
-                                <span style="color: red;">{{ $errors->first('product_id') }}</span>
-                            @endif
-                        </div>
-                        <div class="col-sm-1">
-                            <label for="quantity">Quantidade</label>
-                            <input type="text" class="form-control" id="quantity" name="quantity"
-                                value="{{ old('quantity', @$edit->quantity) }}">
-                            @if ($errors->has('quantity'))
-                                <span style="color: red;">{{ $errors->first('quantity') }}</span>
-                            @endif
-                        </div>
-                        <div class="col-sm-2">
-                            <label for="price">Valor</label>
-                            <input type="text" class="form-control" id="price" name="price" readonly>
-                        </div>
-                        <div class="col-sm-2">
-                            <label for="total_unity">Total</label>
-                            <input type="text" class="form-control" id="total_unity" name="total_unity" readonly>
-                        </div>
-                        <div class="col-sm-2 align-self-end">
-                            <a type="button" class="btn btn-primary w-60" id="showProductModal">Incluir Produto</a>
-                        </div>
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
                     </div>
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <table class="table table-bordered" id="productsTable">
-                                <thead>
-                                    <tr>
-                                        <th>Produto</th>
-                                        <th>Quantidade</th>
-                                        <th>Valor Unitário</th>
-                                        <th>Total</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                </tbody>
-                                <tfoot>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-                    <br>
-                </div>
+                @endif
+
                 <div class="row">
-                    <div class="col-sm-2">
-                        <label for="total_amount">Total</label>
-                        <input type="text" class="form-control" id="total_amount" name="total_amount" readonly>
-                    </div>
-                    <div class="col-sm-12 mt-3" id="paymentConditionsDiv">
-                        <div class="card card-secondary">
-                            <div class="card-header">
-                                <h5 class="card-title">Condições de Pagamento</h5>
-                            </div>
-                            <div class="row">
-                                <div class="col-sm-2">
-                                    <br>
-                                    <select class="form-control" id="conditionpayment_id" name="conditionpayment_id">
-                                        <option value="">Selecione</option>
-                                        @foreach ($paymentConditions as $key => $label)
-                                            <option value="{{ $key }}">{{ $label }}</option>
-                                        @endforeach
-                                        {{-- <option value="personalizado">Personalizado</option> --}}
-                                    </select>
-                                </div>
-                                <div id="customInstallmentsDiv" style="display:none; margin-top:15px;">
-                                    <div class="form-group">
-                                        <div class="col-sm-10">
-                                            <label for="installments_qty">Quantidade de Parcelas</label>
-                                            <input type="number" min="1" class="form-control" id="installments_qty"
-                                                value="1">
-                                        </div>
-                                    </div>
-                                    <div id="installmentsList"></div>
-                                </div>
-                            </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="costumer_id">Cliente</label>
+                            <select class="form-control" id="costumer_id" name="costumer_id" required>
+                                <option value="">Selecione</option>
+                                @foreach ($customers as $customer)
+                                    <option value="{{ $customer->id }}" data-cpf="{{ $customer->cpf }}"
+                                        {{ old('costumer_id', @$sale->costumer_id) == $customer->id ? 'selected' : '' }}>
+                                        {{ $customer->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
-
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>CPF</label>
+                            <input type="text" class="form-control" id="customer-cpf" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="sale_date">Data da Venda</label>
+                            <input type="date" class="form-control" id="sale_date" name="sale_date"
+                                value="{{ old('sale_date', date('Y-m-d')) }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="payment_method">Forma de Pagamento</label>
+                            <select class="form-control" id="payment_method" name="payment_method" required>
+                                <option value="">Selecione...</option>
+                                @foreach ($paymentMethods as $key => $label)
+                                    <option value="{{ $key }}"
+                                        {{ old('payment_method', @$sale->payment_method) == $key ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
+
+                <hr>
+                <h5>Itens da Venda</h5>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="products-table">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Quantidade</th>
+                                <th>Preço Unitário</th>
+                                <th>Total</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-tbody">
+                            @if (isset($sale) && $sale->products->count())
+                                @foreach ($sale->products as $i => $product)
+                                    <tr class="product-row">
+                                        <td>
+                                            <select class="form-control product-select"
+                                                name="products[{{ $i }}][product_id]" required>
+                                                <option value="">Selecione um produto</option>
+                                                @foreach ($products as $p)
+                                                    <option value="{{ $p->id }}" data-price="{{ $p->price }}"
+                                                        {{ $product->product_id == $p->id ? 'selected' : '' }}>
+                                                        {{ $p->product_name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="number" class="form-control quantity-input"
+                                                name="products[{{ $i }}][quantity]"
+                                                value="{{ $product->quantity }}" min="1" required>
+                                        </td>
+                                        <td>
+                                            <input type="number" class="form-control price-input"
+                                                name="products[{{ $i }}][price]" value="{{ $product->price }}"
+                                                step="0.01" min="0" required>
+                                        </td>
+                                        <td>
+                                            <input type="number" class="form-control total-input"
+                                                value="{{ $product->total_unity }}" readonly>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-danger btn-sm remove-product"
+                                                {{ $loop->count == 1 ? 'disabled' : '' }}>
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @else
+                                <tr class="product-row">
+                                    <td>
+                                        <select class="form-control product-select" name="products[0][product_id]" required>
+                                            <option value="">Selecione um produto</option>
+                                            @foreach ($products as $product)
+                                                <option value="{{ $product->id }}" data-price="{{ $product->price }}">
+                                                    {{ $product->product_name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control quantity-input"
+                                            name="products[0][quantity]" min="1" value="1" required>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control price-input" name="products[0][price]"
+                                            step="0.01" min="0" required>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control total-input" readonly>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-danger btn-sm remove-product" disabled>
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <button type="button" class="btn btn-success" id="add-product">
+                            <i class="fas fa-plus"></i> Adicionar Produto
+                        </button>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <h4>Total Geral: R$ <span
+                                id="grand-total">{{ number_format(old('total_amount', @$sale->total_amount ?? 0), 2, ',', '.') }}</span>
+                        </h4>
+                        <input type="hidden" id="total_amount" name="total_amount"
+                            value="{{ old('total_amount', @$sale->total_amount ?? 0) }}">
+                    </div>
+                </div>
+
+                <hr>
+
+                <div id="installments-section"
+                    @if (isset($sale) && $sale->payment_method === 'parcelado') style="display: block;" @else style="display: none;" @endif>
+                    <div class="form-group col-md-2">
+                        <label for="installments_count">Quantidade de Parcelas</label>
+                        <input type="number" min="1" class="form-control" id="installments_count"
+                            value="1">
+                    </div>
+                    <h5>Parcelas</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="installments-table">
+                            <thead>
+                                <tr>
+                                    <th>Parcela</th>
+                                    <th>Valor</th>
+                                    <th>Data de Vencimento</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="installments-tbody">
+                                @if (isset($sale) && $sale->installments->count())
+                                    @foreach ($sale->installments as $i => $installment)
+                                        <tr class="installment-row">
+                                            <td>{{ $i + 1 }}ª</td>
+                                            <td>
+                                                <input type="text" class="form-control"
+                                                    name="installments[{{ $i }}][amount]"
+                                                    value="{{ $installment->amount }}" required>
+                                            </td>
+                                            <td>
+                                                <input type="date" class="form-control"
+                                                    name="installments[{{ $i }}][due_date]"
+                                                    value="{{ \Carbon\Carbon::parse($installment->due_date)->format('Y-m-d') }}"
+                                                    store required>
+                                            </td>
+                                            <td>
+                                                <button type="button" class="btn btn-danger btn-sm remove-installment">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
+
             <div class="card-footer">
-                <button type="submit" class="btn btn-primary">Reg. Venda</button>
-                <a href="{{ route('sale.index') }}" type="button" class="btn btn-secondary">Voltar</a>
+                <button type="submit" class="btn btn-primary">Salvar Venda</button>
+                <a href="{{ route('sale.index') }}" class="btn btn-secondary">Cancelar</a>
             </div>
         </form>
     </div>
-
-@stop
-
-@section('css')
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 @stop
 
 @section('js')
-    <script src="{{ asset('vendor/jquery/jquery.maskMoney.min.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-
-
-    <script>
-        $(document).ready(function() {
-            $('#costumer_id').on('change', function() {
-                var selected = $(this).find('option:selected');
-                $('#cpf').val(selected.data('cpf') || '');
-                $('#phone').val(selected.data('phone') || '');
-            });
-
-            var selected = $('#costumer_id').find('option:selected');
-            $('#cpf').val(selected.data('cpf') || '');
-            $('#phone').val(selected.data('phone') || '');
-
-            $('#product_id').on('change', function() {
-                var selected = $(this).find('option:selected');
-                $('#price').val(selected.data('price') || '');
-
-            });
-            var selectedProduct = $('#product_id').find('option:selected');
-            $('#price').val(selectedProduct.data('price') || '');
-            $('#total_amount').maskMoney({
-                prefix: 'R$ ',
-                allowNegative: false,
-                thousands: '.',
-                decimal: ',',
-                affixesStay: false
-            });
-
-
-            $('#quantity, #price').on('input', function() {
-                let quantity = parseFloat($('#quantity').val().replace(',', '.')) || 0;
-                let price = parseFloat($('#price').val().replace(',', '.')) || 0;
-                let total = (quantity * price).toFixed(2);
-                $('#total_unity').val(total);
-            });
-
-
-            $('#product_id').on('change', function() {
-                let selected = $(this).find('option:selected');
-                $('#price').val(selected.data('price') || '');
-                $('#stock_quantity').val(selected.data('stock') || '');
-                $('#quantity').trigger('input');
-            });
-
-        });
-    </script>
-
     <script>
         $(document).ready(function() {
 
+            if ($('#payment_method').val() === 'parcelado') {
+                $('#installments-section').show();
+            }
+            let productIndex = 1;
+            let installmentIndex = 0;
 
-            $('#quantity, #price').on('input', function() {
-                let quantity = parseFloat($('#quantity').val().replace(',', '.')) || 0;
-                let price = parseFloat($('#price').val().replace(',', '.')) || 0;
-                let total = (quantity * price).toFixed(2);
-                $('#total_unity').val(total);
+            $('#add-product').click(function() {
+                const newRow = `
+            <tr class="product-row">
+                <td>
+                    <select class="form-control product-select" name="products[${productIndex}][product_id]" required>
+                        <option value="">Selecione um produto</option>
+                        @foreach ($products as $product)
+                            <option value="{{ $product->id }}" data-price="{{ $product->price }}">
+                                {{ $product->product_name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </td>
+                <td>
+                    <input type="number" class="form-control quantity-input" name="products[${productIndex}][quantity]" 
+                           min="1" value="1" required>
+                </td>
+                <td>
+                    <input type="number" class="form-control price-input" name="products[${productIndex}][price]" 
+                           step="0.01" min="0" required>
+                </td>
+                <td>
+                    <input type="number" class="form-control total-input" readonly>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm remove-product">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+                $('#products-tbody').append(newRow);
+                productIndex++;
+                updateRemoveButtons();
             });
 
-
-            $('#product_id').on('change', function() {
-                let selected = $(this).find('option:selected');
-                $('#price').val(selected.data('price') || '');
-                $('#stock_quantity').val(selected.data('stock') || '');
-                $('#quantity').trigger('input');
+            // Remover produto
+            $(document).on('click', '.remove-product', function() {
+                $(this).closest('tr').remove();
+                updateRemoveButtons();
+                calculateGrandTotal();
             });
-        });
-    </script>
 
-    <script>
-        function updateGrandTotal() {
-            let total = 0;
-            $('#productsTable tbody tr').each(function() {
-                let rowTotal = parseFloat($(this).find('input[name^="products"][name$="[total]"]').val()) || 0;
-                total += rowTotal;
+            // Atualizar preço quando produto é selecionado
+            $(document).on('change', '.product-select', function() {
+                const price = $(this).find(':selected').data('price');
+                const row = $(this).closest('tr');
+                row.find('.price-input').val(price);
+                calculateRowTotal(row);
             });
-            $('#grandTotal').text(total.toFixed(2));
-            $('#total_amount').val(total.toFixed(2));
-        }
-    </script>
 
-    <script>
-        $(document).ready(function() {
-            let productIndex = 0;
+            // Calcular total da linha quando quantidade ou preço muda
+            $(document).on('input', '.quantity-input, .price-input', function() {
+                const row = $(this).closest('tr');
+                calculateRowTotal(row);
+            });
 
-            $('#showProductModal').on('click', function() {
-                var productId = $('#product_id').val();
-                var product_name = $('#product_id option:selected').text();
-                var quantity = $('#quantity').val();
-                var price = $('#price').val();
-                var total = $('#total_unity').val();
-
-                if (!productId || !quantity || !price) {
-                    alert('Selecione o produto e informe a quantidade!');
-                    return;
+            // Mostrar/ocultar seção de parcelas
+            $('#payment_method').change(function() {
+                if ($(this).val() === 'parcelado') {
+                    $('#installments-section').show();
+                    if ($('#installments-tbody tr').length === 0) {
+                        addInstallment();
+                    }
+                } else {
+                    $('#installments-section').hide();
                 }
+            });
 
-                $('#productsTable tbody').append(`
-            <tr>
+
+
+            // Adicionar parcela
+            $('#installments_count').on('input', function() {
+                let count = parseInt($(this).val()) || 1;
+                let total = parseFloat($('#total_amount').val().replace(',', '.')) || 0;
+                let baseValue = Math.floor((total / count) * 100) / 100;
+                let remainder = Math.round((total - (baseValue * count)) * 100) / 100;
+
+                $('#installments-tbody').empty();
+                for (let i = 0; i < count; i++) {
+                    let value = baseValue;
+                    // Adiciona o resto à última parcela para fechar o valor total
+                    if (i === count - 1) value += remainder;
+                    let today = new Date();
+                    today.setMonth(today.getMonth() + i);
+                    let dueDate = today.toISOString().slice(0, 10);
+
+                    $('#installments-tbody').append(`
+            <tr class="installment-row">
+                <td>${i + 1}ª</td>
                 <td>
-                    ${product_name}
-                    <input type="hidden" name="products[${productIndex}][product_id]" value="${productId}">
+                    <input type="text" class="form-control" name="installments[${i}][amount]" value="${value.toFixed(2)}" required>
                 </td>
                 <td>
-                    ${quantity}
-                    <input type="hidden" name="products[${productIndex}][quantity]" value="${quantity}">
+                    <input type="date" class="form-control" name="installments[${i}][due_date]" value="${dueDate}" required>
                 </td>
                 <td>
-                    ${price}
-                    <input type="hidden" name="products[${productIndex}][price]" value="${price}">
-                </td>
-                <td>
-                    ${total}
-                    <input type="hidden" name="products[${productIndex}][total]" value="${total}">
-                </td>
-                <td>
-                    <button type="button" class="btn btn-warning btn-sm edit-product">Editar</button>
-                    <button type="button" class="btn btn-danger btn-sm remove-product">Remover</button>
+                    <button type="button" class="btn btn-danger btn-sm remove-installment">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </td>
             </tr>
         `);
-
-                productIndex++;
-
-
-                $('#product_id').val('');
-                $('#quantity').val('');
-                $('#price').val('');
-                $('#total_unity').val('');
-                updateGrandTotal();
-            });
-
-
-            $(document).on('click', '.remove-product', function() {
-                $(this).closest('tr').remove();
-                updateGrandTotal();
-            });
-            $(document).on('click', '.edit-product', function() {
-                var row = $(this).closest('tr');
-                var productId = row.find('input[name^="products"][name$="[product_id]"]').val();
-                var quantity = row.find('input[name^="products"][name$="[quantity]"]').val();
-                var price = row.find('input[name^="products"][name$="[price]"]').val();
-                var total = row.find('input[name^="products"][name$="[total]"]').val();
-
-                $('#product_id').val(productId);
-                $('#quantity').val(quantity);
-                $('#price').val(price);
-                $('#total_unity').val(total);
-
-                row.remove();
-                updateGrandTotal();
-            });
-        });
-    </script>
-
-    <script>
-        $(document).ready(function() {
-            $('#conditionpayment_id').on('change', function() {
-                if ($(this).val() === 'personalizado') {
-                    $('#customInstallmentsDiv').slideDown();
-                    generateInstallments();
-                } else {
-                    $('#customInstallmentsDiv').slideUp();
                 }
             });
-
-            $('#installments_qty').on('input', function() {
-                generateInstallments();
-            });
-
-            function generateInstallments() {
-                let qty = parseInt($('#installments_qty').val()) || 1;
+            $(document).on('input', 'input[name^="installments"][name$="[amount]"]', function() {
                 let total = parseFloat($('#total_amount').val().replace(',', '.')) || 0;
-                let baseValue = (total / qty).toFixed(2);
-
-                let html = '<label>Parcelas</label>';
-                let today = new Date();
-                for (let i = 1; i <= qty; i++) {
-                    let dueDate = new Date(today.getFullYear(), today.getMonth() + i, today.getDate());
-                    let dueDateStr = dueDate.toISOString().slice(0, 10);
-
-                    html += `
-                <div class="input-group mb-2 installment-row" data-index="${i}">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">Parcela ${i}</span>
-                    </div>
-                    <input type="number" step="0.01" min="0" class="form-control installment-value" name="installments[${i}][value]" value="${baseValue}">
-                    <input type="date" class="form-control installment-date" name="installments[${i}][date]" value="${dueDateStr}">
-                </div>
-            `;
-                }
-                $('#installmentsList').html(html);
-                updateInstallmentsSum();
-            }
-
-            $(document).on('input', '.installment-value', function() {
-                let qty = parseInt($('#installments_qty').val()) || 1;
-                let total = parseFloat($('#total_amount').val().replace(',', '.')) || 0;
-                let changedIndex = $(this).closest('.installment-row').data('index');
+                let count = $('#installments-tbody tr').length;
+                let currentIndex = $(this).closest('tr').index();
                 let sumPrev = 0;
 
-                // Soma todas as parcelas anteriores à alterada
-                $('.installment-row').each(function() {
-                    let idx = $(this).data('index');
-                    if (idx < changedIndex) {
-                        sumPrev += parseFloat($(this).find('.installment-value').val()) || 0;
+                // Soma todas as parcelas anteriores (incluindo a atual)
+                $('#installments-tbody tr').each(function(i) {
+                    if (i <= currentIndex) {
+                        sumPrev += parseFloat($(this).find('input[name$="[amount]"]').val().replace(
+                            ',', '.')) || 0;
                     }
                 });
 
-                // Valor já definido para a parcela alterada
-                let currentValue = parseFloat($(this).val()) || 0;
-                sumPrev += currentValue;
-
                 // Valor restante para as próximas parcelas
                 let remaining = total - sumPrev;
-                let remainingInstallments = qty - changedIndex;
+                let remainingCount = count - (currentIndex + 1);
 
-                // Atualiza as parcelas posteriores
-                if (remainingInstallments > 0) {
-                    let newValue = (remaining / remainingInstallments).toFixed(2);
-                    $('.installment-row').each(function() {
-                        let idx = $(this).data('index');
-                        if (idx > changedIndex) {
-                            $(this).find('.installment-value').val(newValue);
+                // Recalcula as próximas parcelas
+                if (remainingCount > 0) {
+                    let baseValue = Math.floor((remaining / remainingCount) * 100) / 100;
+                    let remainder = Math.round((remaining - (baseValue * remainingCount)) * 100) / 100;
+
+                    $('#installments-tbody tr').each(function(i) {
+                        if (i > currentIndex) {
+                            let value = baseValue;
+                            if (i === count - 1) value += remainder;
+                            $(this).find('input[name$="[amount]"]').val(value.toFixed(2));
                         }
                     });
                 }
-
-                updateInstallmentsSum();
             });
 
-            function updateInstallmentsSum() {
-                let sum = 0;
-                $('.installment-value').each(function() {
-                    sum += parseFloat($(this).val()) || 0;
-                });
-
-                if ($('#installmentsList').find('.installments-total').length === 0) {
-                    $('#installmentsList').append('<div class="installments-total mt-2"></div>');
+            $('#payment_method').change(function() {
+                if ($(this).val() === 'parcelado') {
+                    $('#installments-section').show();
+                    $('#installments_count').trigger('input');
+                } else {
+                    $('#installments-section').hide();
                 }
-                $('#installmentsList .installments-total').html('<strong>Total das parcelas: R$ ' + sum.toFixed(2) +
-                    '</strong>');
+
+
+            });
+
+
+
+            // Remover parcela
+            $(document).on('click', '.remove-installment', function() {
+                $(this).closest('tr').remove();
+                updateInstallmentNumbers();
+            });
+
+            function calculateRowTotal(row) {
+                const quantity = parseFloat(row.find('.quantity-input').val()) || 0;
+                const price = parseFloat(row.find('.price-input').val()) || 0;
+                const total = quantity * price;
+                row.find('.total-input').val(total.toFixed(2));
+                calculateGrandTotal();
             }
+
+            function calculateGrandTotal() {
+                let grandTotal = 0;
+                $('.total-input').each(function() {
+                    grandTotal += parseFloat($(this).val()) || 0;
+                });
+                $('#grand-total').text(grandTotal.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2
+                }));
+                $('#total_amount').val(grandTotal.toFixed(2));
+            }
+
+            function updateRemoveButtons() {
+                const rows = $('.product-row');
+                $('.remove-product').prop('disabled', rows.length <= 1);
+            }
+
+            function addInstallment() {
+                const installmentNumber = installmentIndex + 1;
+                const newRow = `
+            <tr class="installment-row">
+                <td>${installmentNumber}ª</td>
+                <td>
+                    <input type="number" class="form-control" name="installments[${installmentIndex}][amount]" 
+                           step="0.01" min="0" required>
+                </td>
+                <td>
+                    <input type="date" class="form-control" name="installments[${installmentIndex}][due_date]" required>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm remove-installment">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+                $('#installments-tbody').append(newRow);
+                installmentIndex++;
+            }
+
+            function updateInstallmentNumbers() {
+                $('#installments-tbody tr').each(function(index) {
+                    $(this).find('td:first').text((index + 1) + 'ª');
+                });
+            }
+
+            // Validação do formulário
+            $('#sale-form').submit(function(e) {
+                const hasProducts = $('.product-row').length > 0;
+                const grandTotal = parseFloat($('#total_amount').val());
+
+                if (!hasProducts) {
+                    e.preventDefault();
+                    alert('Adicione pelo menos um produto à venda.');
+                    return false;
+                }
+
+                if (grandTotal <= 0) {
+                    e.preventDefault();
+                    alert('O valor total da venda deve ser maior que zero.');
+                    return false;
+                }
+
+                // Validar parcelas se pagamento for parcelado
+                if ($('#payment_method').val() === 'parcelado') {
+                    let installmentTotal = 0;
+                    $('input[name*="[amount]"]').each(function() {
+                        installmentTotal += parseFloat($(this).val()) || 0;
+                    });
+
+                    if (Math.abs(installmentTotal - grandTotal) > 0.01) {
+                        e.preventDefault();
+                        alert('A soma das parcelas deve ser igual ao valor total da venda.');
+                        return false;
+                    }
+                }
+            });
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            $('#costumer_id').change(function() {
+                const selectedOption = $(this).find(':selected');
+                const cpf = selectedOption.data('cpf') || '';
+                $('#customer-cpf').val(cpf);
+            });
+
+            $('#costumer_id').trigger('change');
         });
     </script>
 @stop
